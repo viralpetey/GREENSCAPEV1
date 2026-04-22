@@ -240,7 +240,35 @@ const FeedPage = ({ user, profile }) => {
     setMediaPreview(URL.createObjectURL(file));
   };
 
-  const handlePublish = async () => {
+ const handlePublish = async () => {
+  if (!form.title.trim() || !form.content.trim()) {
+    alert("Please fill in title and content!");
+    return;
+  }
+  setSubmitting(true);
+  const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+  
+  const { data, error } = await supabase.from("posts").insert({
+    author_id: user.id,
+    category: form.category,
+    title: form.title,
+    content: form.content,
+    tags,
+    likes: 0,
+    comments: 0,
+  }).select("*, profiles(username, avatar_emoji, badge, lawn_zone)").single();
+  
+  if (error) {
+    alert("Error: " + error.message);
+    setSubmitting(false);
+    return;
+  }
+  
+  if (data) setPosts(prev => [data, ...prev]);
+  setForm({ title: "", content: "", category: "Discussion", tags: "" });
+  setShowCompose(false);
+  setSubmitting(false);
+};
     if (!form.title.trim() || !form.content.trim()) return;
     setSubmitting(true);
     let mediaUrl = null;
